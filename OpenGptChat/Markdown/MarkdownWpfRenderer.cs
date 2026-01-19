@@ -62,7 +62,7 @@ namespace OpenGptChat.Markdown
             return documentElement;
         }
 
-        public void RenderDocumentTo(ContentControl target, MarkdownDocument document, CancellationToken cancellationToken)
+        public void RenderDocumentTo(ContentControl target, MarkdownDocument document, bool thinkingExpanded, CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
                 return;
@@ -73,7 +73,7 @@ namespace OpenGptChat.Markdown
             StackPanel documentElement = new StackPanel();
             target.Content = documentElement;
 
-            foreach (var renderedBlock in RenderBlocks(document, cancellationToken))
+            foreach (var renderedBlock in RenderBlocks(document, thinkingExpanded, cancellationToken))
             {
                 if (cancellationToken.IsCancellationRequested)
                     break;
@@ -84,7 +84,7 @@ namespace OpenGptChat.Markdown
             return;
         }
 
-        public List<FrameworkElement> RenderBlocks(IEnumerable<Block> blocks, CancellationToken cancellationToken)
+        public List<FrameworkElement> RenderBlocks(IEnumerable<Block> blocks, bool thinkingExpanded, CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
                 return new List<FrameworkElement>();
@@ -97,7 +97,7 @@ namespace OpenGptChat.Markdown
                 if (cancellationToken.IsCancellationRequested)
                     break;
 
-                FrameworkElement? renderedBlock = RenderBlock(block, cancellationToken);
+                FrameworkElement? renderedBlock = RenderBlock(block, thinkingExpanded, cancellationToken);
 
                 if (renderedBlock != null)
                 {
@@ -115,7 +115,17 @@ namespace OpenGptChat.Markdown
             return elements;
         }
 
+        public List<FrameworkElement> RenderBlocks(IEnumerable<Block> blocks, CancellationToken cancellationToken)
+        {
+            return RenderBlocks(blocks, false, cancellationToken);
+        }
+
         public FrameworkElement RenderBlock(Block block, CancellationToken cancellationToken)
+        {
+            return RenderBlock(block, false, cancellationToken);
+        }
+
+        public FrameworkElement RenderBlock(Block block, bool thinkingExpanded, CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
                 return new FrameworkElement();
@@ -162,7 +172,7 @@ namespace OpenGptChat.Markdown
             }
             else if (block is CustomContainer customContainer)
             {
-                return RenderCustomContainer(customContainer, cancellationToken);
+                return RenderCustomContainer(customContainer, thinkingExpanded, cancellationToken);
             }
             else if (block is ContainerBlock containerBlock)
             {
@@ -174,7 +184,7 @@ namespace OpenGptChat.Markdown
             }
         }
 
-        public FrameworkElement RenderCustomContainer(CustomContainer customContainer, CancellationToken cancellationToken)
+        public FrameworkElement RenderCustomContainer(CustomContainer customContainer, bool thinkingExpanded, CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
                 return new FrameworkElement();
@@ -185,7 +195,7 @@ namespace OpenGptChat.Markdown
                 {
                     Header = "Thinking Process",
                     Margin = new Thickness(0, 0, 0, NormalSize),
-                    IsExpanded = false
+                    IsExpanded = thinkingExpanded
                 };
 
                 expander.SetResourceReference(Control.ForegroundProperty, MarkdownResKey.MainForeground);
@@ -430,20 +440,22 @@ namespace OpenGptChat.Markdown
                 FormulaControl formulaControl = new FormulaControl()
                 {
                     Formula = mathBlock.Lines.ToString(),
-                    Scale = 20
+                    Scale = 14
                 };
                 
                 formulaControl.SetResourceReference(Control.ForegroundProperty, MarkdownResKey.MainForeground);
 
-                return new Border()
+                TextBlock textBlock = new TextBlock()
                 {
                     Margin = new Thickness(0, 0, 0, NormalSize),
-                    Child = new Viewbox()
-                    {
-                        Child = formulaControl,
-                        HorizontalAlignment = HorizontalAlignment.Left
-                    }
+                    TextAlignment = TextAlignment.Left
                 };
+
+                textBlock.Inlines.Add(new WpfDocs.Run("\n"));
+                textBlock.Inlines.Add(new WpfDocs.InlineUIContainer(formulaControl) { BaselineAlignment = BaselineAlignment.Center });
+                textBlock.Inlines.Add(new WpfDocs.Run("\n"));
+
+                return textBlock;
             }
             catch
             {

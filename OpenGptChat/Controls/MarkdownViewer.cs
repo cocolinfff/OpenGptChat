@@ -89,12 +89,27 @@ namespace OpenGptChat.Controls
                 var renderer =
                     App.GetService<MarkdownWpfRenderer>();
 
+                // Capture the current thinking state
+                bool thinkingExpanded = false;
+                if (RenderedContent is ContentControl oldContentControl && 
+                    oldContentControl.Content is StackPanel oldStackPanel)
+                {
+                    foreach (var child in oldStackPanel.Children)
+                    {
+                        if (child is Expander expander && expander.Header is string header && header == "Thinking Process")
+                        {
+                            thinkingExpanded = expander.IsExpanded;
+                            break;
+                        }
+                    }
+                }
+
                 ContentControl contentControl =
                     new ContentControl();
 
                 RenderedContent = contentControl;
 
-                renderer.RenderDocumentTo(contentControl, doc, cancellationToken);
+                renderer.RenderDocumentTo(contentControl, doc, thinkingExpanded, cancellationToken);
             }
             catch { }
         }
