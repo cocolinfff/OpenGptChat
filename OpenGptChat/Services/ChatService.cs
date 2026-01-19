@@ -23,7 +23,6 @@ namespace OpenGptChat.Services
 
         private OpenAIClient? client;
         private string? client_apikey;
-        private string? client_organization;
         private string? client_apihost;
 
         public ChatStorageService ChatStorageService { get; }
@@ -33,18 +32,24 @@ namespace OpenGptChat.Services
         private void NewOpenAIClient(
             [NotNull] out OpenAIClient client, 
             [NotNull] out string client_apikey,
-            [NotNull] out string client_apihost,
-            [NotNull] out string client_organization)
+            [NotNull] out string client_apihost)
         {
             ApiProfile profile = ConfigurationService.CurrentProfile;
 
             client_apikey = profile.ApiKey;
             client_apihost = profile.ApiHost;
-            client_organization = profile.Organization;
+
+            string host = client_apihost; // Only for configuration
+            if (host.StartsWith("https://")) host = host.Substring(8);
+            else if (host.StartsWith("http://")) host = host.Substring(7);
+
+            if (host.EndsWith("/")) host = host.TrimEnd('/');
+            if (host.EndsWith("/v1")) host = host.Substring(0, host.Length - 3);
+            if (host.EndsWith("/")) host = host.TrimEnd('/');
 
             client = new OpenAIClient(
-                new OpenAIAuthentication(client_apikey, client_organization),
-                new OpenAIClientSettings(client_apihost));
+                new OpenAIAuthentication(client_apikey),
+                new OpenAIClientSettings(host));
         }
 
         private OpenAIClient GetOpenAIClient()
@@ -53,9 +58,8 @@ namespace OpenGptChat.Services
 
             if (client == null ||
                 client_apikey != profile.ApiKey ||
-                client_apihost != profile.ApiHost ||
-                client_organization != profile.Organization)
-                NewOpenAIClient(out client, out client_apikey, out client_apihost, out client_organization);
+                client_apihost != profile.ApiHost)
+                NewOpenAIClient(out client, out client_apikey, out client_apihost);
 
             return client;
         }

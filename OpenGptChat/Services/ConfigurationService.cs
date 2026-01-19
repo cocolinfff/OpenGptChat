@@ -61,7 +61,6 @@ namespace OpenGptChat.Services
                     Name = string.IsNullOrWhiteSpace(Configuration.ActiveApiProfile) ? "Default" : Configuration.ActiveApiProfile,
                     ApiHost = Configuration.ApiHost,
                     ApiKey = Configuration.ApiKey,
-                    Organization = Configuration.Organization,
                     Model = Configuration.Model,
                     ApiTimeout = Configuration.ApiTimeout,
                     Temerature = Configuration.Temerature

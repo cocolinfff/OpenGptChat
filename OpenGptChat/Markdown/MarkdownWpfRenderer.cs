@@ -425,11 +425,31 @@ namespace OpenGptChat.Markdown
             if (string.IsNullOrWhiteSpace(fencedCodeBlock.Info))
                 return RenderCodeBlock(fencedCodeBlock, cancellationToken);
 
+            string codeText = fencedCodeBlock.Lines.ToString();
+
             Border codeElement = new Border()
             {
                 CornerRadius = new CornerRadius(3),
                 Margin = new Thickness(0, 0, 0, NormalSize)
             };
+
+            Grid container = new Grid();
+            container.RowDefinitions.Add(new RowDefinition() { Height = GridLength.Auto });
+            container.RowDefinitions.Add(new RowDefinition());
+
+            Button copyButton = new Button()
+            {
+                Content = "Copy",
+                Padding = new Thickness(NormalSize / 3, NormalSize / 6, NormalSize / 3, NormalSize / 6),
+                HorizontalAlignment = HorizontalAlignment.Right,
+                Margin = new Thickness(NormalSize / 4),
+                MinWidth = NormalSize * 2
+            };
+            copyButton.Click += (s, e) =>
+            {
+                try { Clipboard.SetText(codeText); } catch { }
+            };
+            Grid.SetRow(copyButton, 0);
 
             TextBlock codeContentElement = new TextBlock()
             {
@@ -439,9 +459,13 @@ namespace OpenGptChat.Markdown
                 FontSize = NormalSize,
                 FontFamily = GetCodeTextFontFamily(),
             };
+            Grid.SetRow(codeContentElement, 1);
+
+            container.Children.Add(copyButton);
+            container.Children.Add(codeContentElement);
 
             codeElement.Child =
-                codeContentElement;
+                container;
             codeElement
                 .BindCodeBlockBackground()
                 .BindCodeBlockBorder();
@@ -464,7 +488,7 @@ namespace OpenGptChat.Markdown
             };
 
             WpfSyntaxHighLighting writer = new WpfSyntaxHighLighting(ColorCode.Styling.StyleDictionary.DefaultDark);
-            writer.FormatTextBlock(fencedCodeBlock.Lines.ToString(), language, codeContentElement);
+            writer.FormatTextBlock(codeText, language, codeContentElement);
 
 
             return codeElement;
@@ -475,11 +499,31 @@ namespace OpenGptChat.Markdown
             if (cancellationToken.IsCancellationRequested)
                 return new FrameworkElement();
 
+            string codeText = codeBlock.Lines.ToString();
+
             Border codeElement = new Border()
             {
                 CornerRadius = new CornerRadius(3),
                 Margin = new Thickness(0, 0, 0, NormalSize)
             };
+
+            Grid container = new Grid();
+            container.RowDefinitions.Add(new RowDefinition() { Height = GridLength.Auto });
+            container.RowDefinitions.Add(new RowDefinition());
+
+            Button copyButton = new Button()
+            {
+                Content = "Copy",
+                Padding = new Thickness(NormalSize / 3, NormalSize / 6, NormalSize / 3, NormalSize / 6),
+                HorizontalAlignment = HorizontalAlignment.Right,
+                Margin = new Thickness(NormalSize / 4),
+                MinWidth = NormalSize * 2
+            };
+            copyButton.Click += (s, e) =>
+            {
+                try { Clipboard.SetText(codeText); } catch { }
+            };
+            Grid.SetRow(copyButton, 0);
 
             TextBlock codeContentElement = new TextBlock()
             {
@@ -489,9 +533,13 @@ namespace OpenGptChat.Markdown
                 FontSize = NormalSize,
                 FontFamily = GetCodeTextFontFamily(),
             };
+            Grid.SetRow(codeContentElement, 1);
+
+            container.Children.Add(copyButton);
+            container.Children.Add(codeContentElement);
 
             codeElement.Child =
-                codeContentElement;
+                container;
             codeElement
                 .BindCodeBlockBackground()
                 .BindCodeBlockBorder();
@@ -504,7 +552,7 @@ namespace OpenGptChat.Markdown
                     RenderInlines(codeBlock.Inline, cancellationToken));
 
             codeContentElement.Inlines.Add(
-                new WpfDocs.Run(codeBlock.Lines.ToString()));
+                new WpfDocs.Run(codeText));
 
             return codeElement;
         }

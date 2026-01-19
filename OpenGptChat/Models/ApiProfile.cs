@@ -14,9 +14,6 @@ namespace OpenGptChat.Models
         private string _apiKey = string.Empty;
 
         [ObservableProperty]
-        private string _organization = string.Empty;
-
-        [ObservableProperty]
         private string _model = "gpt-3.5-turbo";
 
         [ObservableProperty]

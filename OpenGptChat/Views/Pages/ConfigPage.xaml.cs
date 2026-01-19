@@ -144,7 +144,6 @@ namespace OpenGptChat.Views.Pages
                 Name = name,
                 ApiHost = source.ApiHost,
                 ApiKey = source.ApiKey,
-                Organization = source.Organization,
                 Model = source.Model,
                 ApiTimeout = source.ApiTimeout,
                 Temerature = source.Temerature
