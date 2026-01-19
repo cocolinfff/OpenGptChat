@@ -61,8 +61,18 @@ namespace OpenGptChat.Controls
                 MarkdownDocument? doc =
                     await Task.Run(() =>
                     {
+                        string contentToParse = content;
+                        
+                        // Handle <think> tags for O1/R1 models
+                        if (!string.IsNullOrEmpty(contentToParse) && contentToParse.Contains("<think>"))
+                        {
+                            contentToParse = System.Text.RegularExpressions.Regex.Replace(contentToParse, 
+                                @"(?s)<think>(.*?)(?:</think>|$)", 
+                                m => $"\n::: think\n{m.Groups[1].Value}\n:::\n");
+                        }
+
                         var doc = Markdig.Markdown.Parse(
-                            content,
+                            contentToParse,
                             new MarkdownPipelineBuilder()
                                 .UseEmphasisExtras()
                                 .UseGridTables()
@@ -70,6 +80,7 @@ namespace OpenGptChat.Controls
                                 .UseTaskLists()
                                 .UseAutoLinks()
                                 .UseMathematics()
+                                .UseCustomContainers()
                                 .Build());
 
                         return doc;

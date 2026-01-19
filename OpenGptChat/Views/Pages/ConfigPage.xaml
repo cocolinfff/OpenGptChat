@@ -110,6 +110,20 @@
 
                 <StackPanel Margin="0 5">
                     <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock>
+                            <Run Text="Thinking (R1/O1)"/>
+                            <Run Text=":"/>
+                        </TextBlock>
+                        <CheckBox Grid.Column="1" VerticalAlignment="Center" IsChecked="{Binding ViewModel.SelectedProfile.Thinking}"/>
+                    </Grid>
+                </StackPanel>
+
+                <StackPanel Margin="0 5">
+                    <Grid>
                         <TextBlock Margin="0 0 0 5">
                             <Run Text="{DynamicResource StrSystemMessages}"/>
                             <Run Text=":"/>

@@ -21,5 +21,8 @@ namespace OpenGptChat.Models
 
         [ObservableProperty]
         private double _temerature = .5;
+
+        [ObservableProperty]
+        private bool _thinking = false;
     }
 }

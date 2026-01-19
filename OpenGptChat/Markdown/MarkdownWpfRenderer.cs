@@ -14,6 +14,7 @@ using ColorCode.Styling;
 using Markdig.Extensions.Tables;
 using Markdig.Extensions.TaskLists;
 using Markdig.Extensions.Mathematics;
+using Markdig.Extensions.CustomContainers;
 using Markdig.Syntax;
 using Markdig.Syntax.Inlines;
 using OpenGptChat.Common.Models;
@@ -159,6 +160,10 @@ namespace OpenGptChat.Markdown
             {
                 return RenderTable(table, cancellationToken);
             }
+            else if (block is CustomContainer customContainer)
+            {
+                return RenderCustomContainer(customContainer, cancellationToken);
+            }
             else if (block is ContainerBlock containerBlock)
             {
                 return RenderContainerBlock(containerBlock, cancellationToken);
@@ -167,6 +172,39 @@ namespace OpenGptChat.Markdown
             {
                 return new TextBlock();
             }
+        }
+
+        public FrameworkElement RenderCustomContainer(CustomContainer customContainer, CancellationToken cancellationToken)
+        {
+            if (cancellationToken.IsCancellationRequested)
+                return new FrameworkElement();
+
+            if (customContainer.Info == "think")
+            {
+                Expander expander = new Expander()
+                {
+                    Header = "Thinking Process",
+                    Margin = new Thickness(0, 0, 0, NormalSize),
+                    IsExpanded = false
+                };
+
+                expander.SetResourceReference(Control.ForegroundProperty, MarkdownResKey.MainForeground);
+
+                StackPanel inner = new StackPanel();
+                expander.Content = inner;
+
+                foreach (var renderedBlock in RenderBlocks(customContainer, cancellationToken))
+                {
+                    if (cancellationToken.IsCancellationRequested)
+                        break;
+
+                    inner.Children.Add(renderedBlock);
+                }
+
+                return expander;
+            }
+
+            return RenderContainerBlock(customContainer, cancellationToken);
         }
 
         public FrameworkElement RenderContainerBlock(ContainerBlock containerBlock, CancellationToken cancellationToken)

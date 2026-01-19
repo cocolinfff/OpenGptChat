@@ -2,11 +2,12 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
-using OpenAI;
-using OpenAI.Chat;
 using OpenGptChat.Models;
 
 namespace OpenGptChat.Services
@@ -21,7 +22,6 @@ namespace OpenGptChat.Services
             ConfigurationService = configurationService;
         }
 
-        private OpenAIClient? client;
         private string? client_apikey;
         private string? client_apihost;
 
@@ -29,68 +29,52 @@ namespace OpenGptChat.Services
 
         public ConfigurationService ConfigurationService { get; }
 
-        private void NewOpenAIClient(
-            [NotNull] out OpenAIClient client, 
-            [NotNull] out string client_apikey,
-            [NotNull] out string client_apihost)
+        private string GetCompletionUrl(ApiProfile profile)
         {
-            ApiProfile profile = ConfigurationService.CurrentProfile;
+            string host = profile.ApiHost.Trim().TrimEnd('/');
+            
+            if (!host.StartsWith("http://") && !host.StartsWith("https://"))
+                host = $"https://{host}";
+            
+            if (!host.EndsWith("/v1"))
+                host = $"{host}/v1";
 
-            client_apikey = profile.ApiKey;
-            client_apihost = profile.ApiHost;
-
-            client = CreateOpenAIClient(profile);
-        }
-
-        private OpenAIClient GetOpenAIClient()
-        {
-            ApiProfile profile = ConfigurationService.CurrentProfile;
-
-            if (client == null ||
-                client_apikey != profile.ApiKey ||
-                client_apihost != profile.ApiHost)
-                NewOpenAIClient(out client, out client_apikey, out client_apihost);
-
-            return client;
-        }
-
-        private string NormalizeHost(string apiHost)
-        {
-            if (string.IsNullOrWhiteSpace(apiHost))
-                return string.Empty;
-
-            string host = apiHost.Trim();
-
-            if (host.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
-                host = host.Substring(8);
-            else if (host.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
-                host = host.Substring(7);
-
-            host = host.TrimEnd('/');
-
-            if (host.EndsWith("/v1", StringComparison.OrdinalIgnoreCase))
-                host = host.Substring(0, host.Length - 3).TrimEnd('/');
-
-            return host;
-        }
-
-        private OpenAIClient CreateOpenAIClient(ApiProfile profile)
-        {
-            string host = NormalizeHost(profile.ApiHost);
-
-            return new OpenAIClient(
-                new OpenAIAuthentication(profile.ApiKey),
-                new OpenAISettings(domain: host)); // Updated to OpenAISettings
+            return $"{host}/chat/completions";
         }
 
         public async Task<IReadOnlyList<string>> ListModelsAsync(ApiProfile profile, CancellationToken token)
         {
-            OpenAIClient tempClient = CreateOpenAIClient(profile);
-            var models = await tempClient.ModelsEndpoint.GetModelsAsync(token);
+            // Simple implementation for ListModels using HttpClient
+            try 
+            {
+                using HttpClient client = new HttpClient();
+                string url = GetCompletionUrl(profile).Replace("/chat/completions", "/models"); 
+                
+                var request = new HttpRequestMessage(HttpMethod.Get, url);
+                request.Headers.Add("Authorization", $"Bearer {profile.ApiKey}");
 
-            return models
-                .Select(m => m.Id)
-                .ToList();
+                var response = await client.SendAsync(request, token);
+                response.EnsureSuccessStatusCode();
+
+                var jsonString = await response.Content.ReadAsStringAsync(token);
+                var root = JsonNode.Parse(jsonString);
+                
+                var models = new List<string>();
+                if (root?["data"] is JsonArray data)
+                {
+                    foreach (var item in data)
+                    {
+                        var id = item?["id"]?.GetValue<string>();
+                        if (!string.IsNullOrEmpty(id))
+                            models.Add(id);
+                    }
+                }
+                return models;
+            }
+            catch
+            {
+                return new List<string>();
+            }
         }
 
         public async Task<(bool success, string message)> ValidateProfileAsync(ApiProfile profile, CancellationToken token)
@@ -154,21 +138,19 @@ namespace OpenGptChat.Services
 
             ChatMessage ask = ChatMessage.Create(sessionId, "user", message);
 
-            OpenAIClient client = GetOpenAIClient();
-
-            List<Message> messages = new List<Message>();
+            var messages = new List<object>();
 
             foreach (var sysmsg in ConfigurationService.Configuration.SystemMessages)
-                messages.Add(new Message(Role.System, sysmsg));
+                messages.Add(new { role = "system", content = sysmsg });
 
             if (session != null)
                 foreach (var sysmsg in session.SystemMessages)
-                    messages.Add(new Message(Role.System, sysmsg));
+                    messages.Add(new { role = "system", content = sysmsg });
 
             foreach (var chatmsg in ChatStorageService.GetAllMessages(sessionId))
-                messages.Add(new Message(Enum.Parse<Role>(chatmsg.Role, true), chatmsg.Content));
+                messages.Add(new { role = chatmsg.Role, content = chatmsg.Content });
 
-            messages.Add(new Message(Role.User, message));
+            messages.Add(new { role = "user", content = message });
 
             string modelName =
                 profile.Model;
@@ -179,32 +161,119 @@ namespace OpenGptChat.Services
 
             StringBuilder sb = new StringBuilder();
 
+            using HttpClient client = new HttpClient();
+            client.Timeout = TimeSpan.FromHours(1); // Long timeout for streaming
+
+            var requestBody = new
+            {
+                model = modelName,
+                messages = messages,
+                stream = true,
+                temperature = temperature
+            };
+
+            var request = new HttpRequestMessage(HttpMethod.Post, GetCompletionUrl(profile));
+            request.Headers.Add("Authorization", $"Bearer {profile.ApiKey}");
+            request.Content = new StringContent( JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
+
             CancellationTokenSource completionTaskCancellation =
                 CancellationTokenSource.CreateLinkedTokenSource(token);
 
-            Task completionTask = client.ChatEndpoint.StreamCompletionAsync(
-                new ChatRequest(messages, modelName, temperature),
-                async response =>
+            Task completionTask = Task.Run(async () =>
+            {
+                try 
                 {
-                    string? content = response.Choices.FirstOrDefault()?.Delta?.Content;
-                    if (!string.IsNullOrEmpty(content))
+                    using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, completionTaskCancellation.Token);
+                    response.EnsureSuccessStatusCode();
+
+                    using var stream = await response.Content.ReadAsStreamAsync(completionTaskCancellation.Token);
+                    using var reader = new System.IO.StreamReader(stream);
+
+                    string? line;
+                    bool isThinking = false;
+                    bool hasEmittedThinking = false;
+
+                    while ((line = await reader.ReadLineAsync()) != null)
                     {
-                        sb.Append(content);
+                        if (completionTaskCancellation.IsCancellationRequested)
+                            break;
 
-                        while (sb.Length > 0 && char.IsWhiteSpace(sb[0]))
-                            sb.Remove(0, 1);
+                        if (string.IsNullOrWhiteSpace(line)) continue;
+                        if (line.StartsWith("data: "))
+                        {
+                            var json = line.Substring(6).Trim();
+                            if (json == "[DONE]") break;
 
-                        messageHandler.Invoke(sb.ToString());
+                            try
+                            {
+                                var node = JsonNode.Parse(json);
+                                var choice = node?["choices"]?[0];
+                                var delta = choice?["delta"];
 
-                        // 有响应了, 更新时间
-                        lastTime = DateTime.Now;
+                                if (delta != null)
+                                {
+                                    // 1. Handle reasoning content
+                                    var reasoning = delta["reasoning_content"]?.GetValue<string>();
+                                    // Some models use 'reasoning' instead of 'reasoning_content', check both if necessary.
+                                    // DeepSeek R1 uses 'reasoning_content'.
+                                    
+                                    if (!string.IsNullOrEmpty(reasoning))
+                                    {
+                                        if (!isThinking) 
+                                        {
+                                            // Start of thinking block
+                                            if (!hasEmittedThinking)
+                                            {
+                                                sb.Append("::: think\n");
+                                                hasEmittedThinking = true;
+                                            }
+                                            isThinking = true;
+                                        }
+
+                                        sb.Append(reasoning);
+                                        messageHandler.Invoke(sb.ToString());
+                                        lastTime = DateTime.Now;
+                                    }
+
+                                    // 2. Handle standard content
+                                    var content = delta["content"]?.GetValue<string>();
+                                    if (!string.IsNullOrEmpty(content))
+                                    {
+                                        if (isThinking)
+                                        {
+                                            // End of thinking block
+                                            sb.Append("\n:::\n");
+                                            isThinking = false;
+                                        }
+
+                                        sb.Append(content);
+                                        messageHandler.Invoke(sb.ToString());
+                                        lastTime = DateTime.Now;
+                                    }
+                                }
+                            }
+                            catch { /* Ignore parse errors */ }
+                        }
                     }
                     
-                    await Task.CompletedTask;
-                },
-                true,
-                completionTaskCancellation.Token);
+                    if (isThinking)
+                    {
+                         sb.Append("\n:::\n");
+                         messageHandler.Invoke(sb.ToString());
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // If cancellation was requested, it's fine
+                    if (!completionTaskCancellation.IsCancellationRequested)
+                    {
+                         // Handle error or rethrow
+                         // For now, let the timeout handler manage it or just log
+                    }
+                }
+            }, completionTaskCancellation.Token);
 
+            // Timeout Watchdog
             Task cancelTask = Task.Run(async () =>
             {
                 try
@@ -216,7 +285,6 @@ namespace OpenGptChat.Services
                     {
                         await Task.Delay(100);
 
-                        // 如果当前时间与上次响应的时间相差超过配置的超时时间, 则扔异常
                         if ((DateTime.Now - lastTime) > timeout)
                         {
                             completionTaskCancellation.Cancel();
