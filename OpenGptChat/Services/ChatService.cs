@@ -80,7 +80,7 @@ namespace OpenGptChat.Services
 
             return new OpenAIClient(
                 new OpenAIAuthentication(profile.ApiKey),
-                new OpenAIClientSettings(host));
+                new OpenAISettings(domain: host)); // Updated to OpenAISettings
         }
 
         public async Task<IReadOnlyList<string>> ListModelsAsync(ApiProfile profile, CancellationToken token)
@@ -184,7 +184,7 @@ namespace OpenGptChat.Services
 
             Task completionTask = client.ChatEndpoint.StreamCompletionAsync(
                 new ChatRequest(messages, modelName, temperature),
-                response =>
+                async response =>
                 {
                     string? content = response.Choices.FirstOrDefault()?.Delta?.Content;
                     if (!string.IsNullOrEmpty(content))
@@ -199,7 +199,11 @@ namespace OpenGptChat.Services
                         // 有响应了, 更新时间
                         lastTime = DateTime.Now;
                     }
-                }, completionTaskCancellation.Token);
+                    
+                    await Task.CompletedTask;
+                },
+                true,
+                completionTaskCancellation.Token);
 
             Task cancelTask = Task.Run(async () =>
             {
