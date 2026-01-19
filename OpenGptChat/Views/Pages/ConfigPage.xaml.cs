@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.ComponentModel;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows;
@@ -36,6 +37,9 @@ namespace OpenGptChat.Views.Pages
 
             LoadSystemMessagesCore();
 
+            ViewModel.PropertyChanged += ViewModel_PropertyChanged;
+            ViewModel.SelectedProfile = ConfigurationService.CurrentProfile;
+
             InitializeComponent();
 
             smoothScrollingService.Register(configurationScrollViewer);
@@ -48,6 +52,14 @@ namespace OpenGptChat.Views.Pages
         public LanguageService LanguageService { get; }
         public ColorModeService ColorModeService { get; }
         public ConfigurationService ConfigurationService { get; }
+
+        private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(ViewModel.SelectedProfile) && ViewModel.SelectedProfile != null)
+            {
+                ConfigurationService.SetActiveProfile(ViewModel.SelectedProfile.Name);
+            }
+        }
 
         private void LoadSystemMessagesCore()
         {
@@ -114,6 +126,56 @@ namespace OpenGptChat.Views.Pages
         }
 
         [RelayCommand]
+        public void AddProfile()
+        {
+            ApiProfile source = ViewModel.SelectedProfile ?? ConfigurationService.CurrentProfile;
+
+            string baseName = string.IsNullOrWhiteSpace(source.Name) ? "Profile" : source.Name;
+            string name = baseName;
+            int index = 1;
+
+            while (ConfigurationService.Configuration.ApiProfiles.Any(p => p.Name == name))
+            {
+                name = $"{baseName}-{index++}";
+            }
+
+            ApiProfile profile = new ApiProfile
+            {
+                Name = name,
+                ApiHost = source.ApiHost,
+                ApiKey = source.ApiKey,
+                Organization = source.Organization,
+                Model = source.Model,
+                ApiTimeout = source.ApiTimeout,
+                Temerature = source.Temerature
+            };
+
+            ConfigurationService.Configuration.ApiProfiles.Add(profile);
+            ViewModel.SelectedProfile = profile;
+        }
+
+        [RelayCommand]
+        public async Task RemoveProfile()
+        {
+            if (ViewModel.SelectedProfile == null)
+                return;
+
+            if (ConfigurationService.Configuration.ApiProfiles.Count <= 1)
+            {
+                await NoteService.ShowAndWaitAsync("At least one profile is required", 1500);
+                return;
+            }
+
+            ApiProfile toRemove = ViewModel.SelectedProfile;
+            ConfigurationService.Configuration.ApiProfiles.Remove(toRemove);
+
+            if (ConfigurationService.Configuration.ActiveApiProfile == toRemove.Name)
+                ConfigurationService.Configuration.ActiveApiProfile = ConfigurationService.Configuration.ApiProfiles.First().Name;
+
+            ViewModel.SelectedProfile = ConfigurationService.Configuration.ApiProfiles.FirstOrDefault();
+        }
+
+        [RelayCommand]
         public Task SaveConfiguration()
         {
             ConfigurationService.Configuration.Language =
@@ -121,6 +183,7 @@ namespace OpenGptChat.Views.Pages
             ConfigurationService.Configuration.ColorMode =
                 ColorModeService.CurrentMode;
 
+            ConfigurationService.SetActiveProfile(ViewModel.SelectedProfile?.Name);
             ConfigurationService.Save();
             return NoteService.ShowAndWaitAsync("Configuration saved", 2000);
         }

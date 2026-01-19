@@ -32,6 +32,7 @@
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.77" />
     <PackageReference Include="EleCho.GlobalHotkey.Windows.Wpf" Version="1.0.1.5" />
     <PackageReference Include="OpenAI-DotNet" Version="7.2.3" />
+    <PackageReference Include="WpfMath" Version="2.1.0" />
   </ItemGroup>
 
   <ItemGroup>

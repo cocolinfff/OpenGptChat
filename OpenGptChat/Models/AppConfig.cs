@@ -1,10 +1,17 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using System.Collections.ObjectModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using OpenGptChat.Common.Models;
 
 namespace OpenGptChat.Models
 {
     public partial class AppConfig : ObservableObject
     {
+        [ObservableProperty]
+        private ObservableCollection<ApiProfile> _apiProfiles = new();
+
+        [ObservableProperty]
+        private string _activeApiProfile = string.Empty;
+
         [ObservableProperty]
         private string _apiHost = "openaiapi.elecho.org";
 

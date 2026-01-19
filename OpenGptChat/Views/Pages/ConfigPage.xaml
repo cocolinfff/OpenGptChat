@@ -41,46 +41,71 @@
         <ScrollViewer Grid.Row="1" Name="configurationScrollViewer">
             <StackPanel Margin="10" MaxWidth="600">
                 <StackPanel Margin="0 5">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Orientation="Vertical">
+                            <TextBlock Margin="0 0 0 5">
+                                <Run Text="API Profiles"/>
+                                <Run Text=":"/>
+                            </TextBlock>
+                            <ComboBox Width="250" 
+                                      ItemsSource="{Binding ConfigurationService.Configuration.ApiProfiles}"
+                                      SelectedItem="{Binding ViewModel.SelectedProfile, Mode=TwoWay}"
+                                      DisplayMemberPath="Name" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                            <Button Content=" + " BorderThickness="0" Padding="6 3" Command="{Binding AddProfileCommand}" ToolTip="Add profile"/>
+                            <Button Content=" - " BorderThickness="0" Padding="6 3" Margin="6 0 0 0" Command="{Binding RemoveProfileCommand}" ToolTip="Remove profile"/>
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+
+                <StackPanel Margin="0 5">
                     <TextBlock Margin="0 0 0 5">
                         <Run Text="{DynamicResource StrAPIKey}"/>
                         <Run Text=":"/>
                     </TextBlock>
-                    <TextBox Padding="5 3" Text="{Binding ConfigurationService.Configuration.ApiKey}"/>
+                    <TextBox Padding="5 3" Text="{Binding ViewModel.SelectedProfile.ApiKey}"/>
                 </StackPanel>
                 <StackPanel Margin="0 5">
                     <TextBlock Margin="0 0 0 5">
                         <Run Text="{DynamicResource StrAPIHost}"/>
                         <Run Text=":"/>
                     </TextBlock>
-                    <TextBox Padding="5 3" Text="{Binding ConfigurationService.Configuration.ApiHost}"/>
+                    <TextBox Padding="5 3" Text="{Binding ViewModel.SelectedProfile.ApiHost}"/>
                 </StackPanel>
                 <StackPanel Margin="0 5">
                     <TextBlock Margin="0 0 0 5">
                         <Run Text="{DynamicResource StrOrganization}"/>
                         <Run Text=":"/>
                     </TextBlock>
-                    <TextBox Padding="5 3" Text="{Binding ConfigurationService.Configuration.Organization}"/>
+                    <TextBox Padding="5 3" Text="{Binding ViewModel.SelectedProfile.Organization}"/>
                 </StackPanel>
                 <StackPanel Margin="0 5">
                     <TextBlock Margin="0 0 0 5">
                         <Run Text="{DynamicResource StrModel}"/>
                         <Run Text=":"/>
                     </TextBlock>
-                    <TextBox Padding="5 3" Text="{Binding ConfigurationService.Configuration.Model}"/>
+                    <TextBox Padding="5 3" Text="{Binding ViewModel.SelectedProfile.Model}"/>
                 </StackPanel>
                 <StackPanel Margin="0 5">
                     <TextBlock Margin="0 0 0 5">
                         <Run Text="{DynamicResource StrAPITimeout}"/>
                         <Run Text=":"/>
                     </TextBlock>
-                    <TextBox Padding="5 3" Text="{Binding ConfigurationService.Configuration.ApiTimeout}"/>
+                    <TextBox Padding="5 3" Text="{Binding ViewModel.SelectedProfile.ApiTimeout}"/>
                 </StackPanel>
                 <StackPanel Margin="0 5">
                     <TextBlock Margin="0 0 0 5">
                         <Run Text="{DynamicResource StrTemperature}"/>
                         <Run Text=":"/>
                     </TextBlock>
-                    <TextBox Padding="5 3" Text="{Binding ConfigurationService.Configuration.Temerature}"/>
+                    <TextBox Padding="5 3" Text="{Binding ViewModel.SelectedProfile.Temerature}"/>
                 </StackPanel>
 
                 <StackPanel Margin="0 5">

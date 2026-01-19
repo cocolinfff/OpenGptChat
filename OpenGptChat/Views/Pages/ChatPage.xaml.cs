@@ -82,7 +82,7 @@ namespace OpenGptChat.Views.Pages
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(ConfigurationService.Configuration.ApiKey))
+            if (string.IsNullOrWhiteSpace(ConfigurationService.CurrentProfile.ApiKey))
             {
                 await NoteService.ShowAndWaitAsync("You can't use OpenChat now, because you haven't set your api key yet", 3000);
                 return;

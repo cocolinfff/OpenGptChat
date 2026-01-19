@@ -9,5 +9,8 @@ namespace OpenGptChat.ViewModels
         [ObservableProperty]
         private ObservableCollection<ValueWrapper<string>> _systemMessages =
             new ObservableCollection<ValueWrapper<string>>();
+
+        [ObservableProperty]
+        private ApiProfile? _selectedProfile;
     }
 }

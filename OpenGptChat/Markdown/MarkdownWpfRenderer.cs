@@ -13,11 +13,13 @@ using ColorCode.Parsing;
 using ColorCode.Styling;
 using Markdig.Extensions.Tables;
 using Markdig.Extensions.TaskLists;
+using Markdig.Extensions.Mathematics;
 using Markdig.Syntax;
 using Markdig.Syntax.Inlines;
 using OpenGptChat.Common.Models;
 using OpenGptChat.Services;
 using WpfDocs = System.Windows.Documents;
+using WpfMath.Controls;
 
 namespace OpenGptChat.Markdown
 {
@@ -148,6 +150,10 @@ namespace OpenGptChat.Markdown
             else if (block is ListBlock listBlock)
             {
                 return RenderListBlock(listBlock, cancellationToken);
+            }
+            else if (block is MathBlock mathBlock)
+            {
+                return RenderMathBlock(mathBlock, cancellationToken);
             }
             else if (block is Table table)
             {
@@ -374,6 +380,41 @@ namespace OpenGptChat.Markdown
                 return new FrameworkElement();
 
             return new TextBlock();
+        }
+
+        public FrameworkElement RenderMathBlock(MathBlock mathBlock, CancellationToken cancellationToken)
+        {
+            if (cancellationToken.IsCancellationRequested)
+                return new FrameworkElement();
+
+            try 
+            {
+                FormulaControl formulaControl = new FormulaControl()
+                {
+                    Formula = mathBlock.Lines.ToString(),
+                    Scale = 20
+                };
+                
+                formulaControl.SetResourceReference(Control.ForegroundProperty, MarkdownResKey.MainForeground);
+
+                return new Border()
+                {
+                    Margin = new Thickness(0, 0, 0, NormalSize),
+                    Child = new Viewbox()
+                    {
+                        Child = formulaControl,
+                        HorizontalAlignment = HorizontalAlignment.Left
+                    }
+                };
+            }
+            catch
+            {
+                return new TextBlock()
+                {
+                    Text = mathBlock.Lines.ToString(),
+                    Margin = new Thickness(0, 0, 0, NormalSize)
+                };
+            }
         }
 
         public FrameworkElement RenderFencedCodeBlock(FencedCodeBlock fencedCodeBlock, CancellationToken cancellationToken)
@@ -624,6 +665,10 @@ namespace OpenGptChat.Markdown
             {
                 return RenderTaskListInline(taskListInline, cancellationToken);
             }
+            else if (inline is MathInline mathInline)
+            {
+                return RenderMathInline(mathInline, cancellationToken);
+            }
             else
             {
                 return new WpfDocs.Run();
@@ -640,6 +685,32 @@ namespace OpenGptChat.Markdown
                 IsChecked = taskListInline.Checked,
                 IsEnabled = false,
             }.WrapWithContainer();
+        }
+
+        public WpfDocs.Inline RenderMathInline(MathInline mathInline, CancellationToken cancellationToken)
+        {
+            if (cancellationToken.IsCancellationRequested)
+                return new WpfDocs.Run();
+
+            try
+            {
+                FormulaControl formulaControl = new FormulaControl()
+                {
+                    Formula = mathInline.Content.ToString(),
+                    Scale = 14
+                };
+                
+                formulaControl.SetResourceReference(Control.ForegroundProperty, MarkdownResKey.MainForeground);
+
+                return new WpfDocs.InlineUIContainer(formulaControl)
+                {
+                    BaselineAlignment = BaselineAlignment.Center
+                };
+            }
+            catch
+            {
+                return new WpfDocs.Run(mathInline.Content.ToString());
+            }
         }
 
         public WpfDocs.Inline RenderAutolinkInline(AutolinkInline autolinkInline, CancellationToken cancellationToken)

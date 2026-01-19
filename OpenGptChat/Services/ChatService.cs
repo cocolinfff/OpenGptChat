@@ -36,9 +36,11 @@ namespace OpenGptChat.Services
             [NotNull] out string client_apihost,
             [NotNull] out string client_organization)
         {
-            client_apikey = ConfigurationService.Configuration.ApiKey;
-            client_apihost = ConfigurationService.Configuration.ApiHost;
-            client_organization = ConfigurationService.Configuration.Organization;
+            ApiProfile profile = ConfigurationService.CurrentProfile;
+
+            client_apikey = profile.ApiKey;
+            client_apihost = profile.ApiHost;
+            client_organization = profile.Organization;
 
             client = new OpenAIClient(
                 new OpenAIAuthentication(client_apikey, client_organization),
@@ -47,10 +49,12 @@ namespace OpenGptChat.Services
 
         private OpenAIClient GetOpenAIClient()
         {
+            ApiProfile profile = ConfigurationService.CurrentProfile;
+
             if (client == null ||
-                client_apikey != ConfigurationService.Configuration.ApiKey ||
-                client_apihost != ConfigurationService.Configuration.ApiHost ||
-                client_organization != ConfigurationService.Configuration.Organization)
+                client_apikey != profile.ApiKey ||
+                client_apihost != profile.ApiHost ||
+                client_organization != profile.Organization)
                 NewOpenAIClient(out client, out client_apikey, out client_apihost, out client_organization);
 
             return client;
@@ -97,6 +101,8 @@ namespace OpenGptChat.Services
             ChatSession? session = 
                 ChatStorageService.GetSession(sessionId);
 
+            ApiProfile profile = ConfigurationService.CurrentProfile;
+
             ChatMessage ask = ChatMessage.Create(sessionId, "user", message);
 
             OpenAIClient client = GetOpenAIClient();
@@ -117,9 +123,9 @@ namespace OpenGptChat.Services
             messages.Add(new Message(Role.User, message));
 
             string modelName =
-                ConfigurationService.Configuration.Model;
+                profile.Model;
             double temperature =
-                ConfigurationService.Configuration.Temerature;
+                profile.Temerature;
 
             DateTime lastTime = DateTime.Now;
 
@@ -152,7 +158,7 @@ namespace OpenGptChat.Services
                 try
                 {
                     TimeSpan timeout = 
-                        TimeSpan.FromMilliseconds(ConfigurationService.Configuration.ApiTimeout);
+                        TimeSpan.FromMilliseconds(profile.ApiTimeout);
 
                     while (!completionTask.IsCompleted)
                     {

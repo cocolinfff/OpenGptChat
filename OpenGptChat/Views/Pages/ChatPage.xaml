@@ -23,76 +23,94 @@
             <RowDefinition Height="130"/>
         </Grid.RowDefinitions>
 
-        <ScrollViewer Name="messagesScrollViewer"
-                      HorizontalScrollBarVisibility="Disabled"
-                      VirtualizingPanel.ScrollUnit="Pixel"
-                      VirtualizingPanel.CacheLengthUnit="Pixel">
-            <behaviors:Interaction.Triggers>
-                <behaviors:EventTrigger EventName="Loaded">
-                    <behaviors:CallMethodAction MethodName="ScrollToEnd"/>
-                </behaviors:EventTrigger>
-                <behaviors:EventTrigger EventName="ScrollChanged">
-                    <behaviors:InvokeCommandAction Command="{Binding ScrollToEndWhileReceivingCommand}"/>
-                </behaviors:EventTrigger>
-            </behaviors:Interaction.Triggers>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
 
-            <ItemsControl Name="messages" 
-                          Padding="10 10 10 20" 
-                          ItemsSource="{Binding ViewModel.Messages}"
-                          d:ItemsSource="{d:SampleData ItemCount=5}">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <VirtualizingStackPanel/>
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <controls:ChatBubble BorderThickness="1" CornerRadius="{Binding SelfCornorRadius}" 
-                                             HorizontalAlignment="{Binding SelfAlignment}" HorizontalContentAlignment="{Binding SelfAlignment}"
-                                             Username="{Binding DisplayName}" Content="{Binding Content,Mode=TwoWay}" IsReadonly="{Binding IsReadOnly}"
-                                             ContentForeground="{DynamicResource FontForeground}" ContentBackground="{DynamicResource ChatBubbleBackground}">
-                            <controls:ChatBubble.Style>
-                                <Style TargetType="controls:ChatBubble" BasedOn="{StaticResource AnimatedChatBubble}">
-                                    <Setter Property="HeaderForeground" Value="Gray"/>
-                                    <Setter Property="BorderBrush" Value="{DynamicResource ChatBubbleBorder}"/>
-                                    <Style.Triggers>
-                                        <Trigger Property="IsReadonly" Value="False">
-                                            <Setter Property="HeaderForeground" Value="#569de5"/>
-                                            <Setter Property="BorderBrush" Value="#569de5"/>
-                                        </Trigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </controls:ChatBubble.Style>
-                            <behaviors:Interaction.Triggers>
-                                <behaviors:EventTrigger EventName="MouseDoubleClick">
-                                    <behaviors:InvokeCommandAction Command="{Binding StartEditCommand}"/>
-                                </behaviors:EventTrigger>
-                                <behaviors:EventTrigger EventName="LostFocus">
-                                    <behaviors:InvokeCommandAction Command="{Binding EndEditCommand}"/>
-                                </behaviors:EventTrigger>
-                            </behaviors:Interaction.Triggers>
-                            <controls:ChatBubble.ContextMenu>
-                                <ContextMenu>
-                                    <MenuItem Header="{DynamicResource StrCopy}" Command="{Binding CopyCommand}"/>
-                                    <MenuItem Header="{DynamicResource StrEdit}" Command="{Binding StartEditCommand}"/>
-                                    <MenuItem Header="{DynamicResource StrDelete}">
-                                        <MenuItem Header="{DynamicResource StrThis}"
-                                                  Command="{Binding Source={StaticResource PageProxy},Path=Data.ViewModel.DeleteMessageCommand}"
-                                                  CommandParameter="{Binding}"/>
-                                        <MenuItem Header="{DynamicResource StrAllAbove}"
-                                                  Command="{Binding Source={StaticResource PageProxy},Path=Data.ViewModel.DeleteMessagesAboveCommand}"
-                                                  CommandParameter="{Binding}"/>
-                                        <MenuItem Header="{DynamicResource StrAllBelow}"
-                                                  Command="{Binding Source={StaticResource PageProxy},Path=Data.ViewModel.DeleteMessagesBelowCommand}"
-                                                  CommandParameter="{Binding}"/>
-                                    </MenuItem>
-                                </ContextMenu>
-                            </controls:ChatBubble.ContextMenu>
-                        </controls:ChatBubble>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </ScrollViewer>
+            <Border Grid.Row="0" Padding="10" BorderThickness="0 0 0 1" BorderBrush="{DynamicResource BoxBorder}">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock VerticalAlignment="Center" Margin="0 0 8 0" Text="API Profile:"/>
+                    <ComboBox Width="220"
+                              ItemsSource="{Binding ConfigurationService.Configuration.ApiProfiles}"
+                              SelectedValue="{Binding ConfigurationService.Configuration.ActiveApiProfile, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                              SelectedValuePath="Name"
+                              DisplayMemberPath="Name"/>
+                </StackPanel>
+            </Border>
+
+            <ScrollViewer Grid.Row="1" Name="messagesScrollViewer"
+                          HorizontalScrollBarVisibility="Disabled"
+                          VirtualizingPanel.ScrollUnit="Pixel"
+                          VirtualizingPanel.CacheLengthUnit="Pixel">
+                <behaviors:Interaction.Triggers>
+                    <behaviors:EventTrigger EventName="Loaded">
+                        <behaviors:CallMethodAction MethodName="ScrollToEnd"/>
+                    </behaviors:EventTrigger>
+                    <behaviors:EventTrigger EventName="ScrollChanged">
+                        <behaviors:InvokeCommandAction Command="{Binding ScrollToEndWhileReceivingCommand}"/>
+                    </behaviors:EventTrigger>
+                </behaviors:Interaction.Triggers>
+
+                <ItemsControl Name="messages" 
+                              Padding="10 10 10 20" 
+                              ItemsSource="{Binding ViewModel.Messages}"
+                              d:ItemsSource="{d:SampleData ItemCount=5}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <VirtualizingStackPanel/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <controls:ChatBubble BorderThickness="1" CornerRadius="{Binding SelfCornorRadius}" 
+                                                 HorizontalAlignment="{Binding SelfAlignment}" HorizontalContentAlignment="{Binding SelfAlignment}"
+                                                 Username="{Binding DisplayName}" Content="{Binding Content,Mode=TwoWay}" IsReadonly="{Binding IsReadOnly}"
+                                                 ContentForeground="{DynamicResource FontForeground}" ContentBackground="{DynamicResource ChatBubbleBackground}">
+                                <controls:ChatBubble.Style>
+                                    <Style TargetType="controls:ChatBubble" BasedOn="{StaticResource AnimatedChatBubble}">
+                                        <Setter Property="HeaderForeground" Value="Gray"/>
+                                        <Setter Property="BorderBrush" Value="{DynamicResource ChatBubbleBorder}"/>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsReadonly" Value="False">
+                                                <Setter Property="HeaderForeground" Value="#569de5"/>
+                                                <Setter Property="BorderBrush" Value="#569de5"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </controls:ChatBubble.Style>
+                                <behaviors:Interaction.Triggers>
+                                    <behaviors:EventTrigger EventName="MouseDoubleClick">
+                                        <behaviors:InvokeCommandAction Command="{Binding StartEditCommand}"/>
+                                    </behaviors:EventTrigger>
+                                    <behaviors:EventTrigger EventName="LostFocus">
+                                        <behaviors:InvokeCommandAction Command="{Binding EndEditCommand}"/>
+                                    </behaviors:EventTrigger>
+                                </behaviors:Interaction.Triggers>
+                                <controls:ChatBubble.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="{DynamicResource StrCopy}" Command="{Binding CopyCommand}"/>
+                                        <MenuItem Header="{DynamicResource StrEdit}" Command="{Binding StartEditCommand}"/>
+                                        <MenuItem Header="{DynamicResource StrDelete}">
+                                            <MenuItem Header="{DynamicResource StrThis}"
+                                                      Command="{Binding Source={StaticResource PageProxy},Path=Data.ViewModel.DeleteMessageCommand}"
+                                                      CommandParameter="{Binding}"/>
+                                            <MenuItem Header="{DynamicResource StrAllAbove}"
+                                                      Command="{Binding Source={StaticResource PageProxy},Path=Data.ViewModel.DeleteMessagesAboveCommand}"
+                                                      CommandParameter="{Binding}"/>
+                                            <MenuItem Header="{DynamicResource StrAllBelow}"
+                                                      Command="{Binding Source={StaticResource PageProxy},Path=Data.ViewModel.DeleteMessagesBelowCommand}"
+                                                      CommandParameter="{Binding}"/>
+                                        </MenuItem>
+                                    </ContextMenu>
+                                </controls:ChatBubble.ContextMenu>
+                            </controls:ChatBubble>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Grid>
 
         <Grid Grid.Row="1">
             <TextBox Name="inputBox" utilities:FocusUtils.IsAutoLogicFocus="True"

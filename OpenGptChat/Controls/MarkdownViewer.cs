@@ -69,6 +69,7 @@ namespace OpenGptChat.Controls
                                 .UsePipeTables()
                                 .UseTaskLists()
                                 .UseAutoLinks()
+                                .UseMathematics()
                                 .Build());
 
                         return doc;
