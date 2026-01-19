@@ -39,17 +39,7 @@ namespace OpenGptChat.Services
             client_apikey = profile.ApiKey;
             client_apihost = profile.ApiHost;
 
-            string host = client_apihost; // Only for configuration
-            if (host.StartsWith("https://")) host = host.Substring(8);
-            else if (host.StartsWith("http://")) host = host.Substring(7);
-
-            if (host.EndsWith("/")) host = host.TrimEnd('/');
-            if (host.EndsWith("/v1")) host = host.Substring(0, host.Length - 3);
-            if (host.EndsWith("/")) host = host.TrimEnd('/');
-
-            client = new OpenAIClient(
-                new OpenAIAuthentication(client_apikey),
-                new OpenAIClientSettings(host));
+            client = CreateOpenAIClient(profile);
         }
 
         private OpenAIClient GetOpenAIClient()
@@ -62,6 +52,61 @@ namespace OpenGptChat.Services
                 NewOpenAIClient(out client, out client_apikey, out client_apihost);
 
             return client;
+        }
+
+        private string NormalizeHost(string apiHost)
+        {
+            if (string.IsNullOrWhiteSpace(apiHost))
+                return string.Empty;
+
+            string host = apiHost.Trim();
+
+            if (host.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                host = host.Substring(8);
+            else if (host.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
+                host = host.Substring(7);
+
+            host = host.TrimEnd('/');
+
+            if (host.EndsWith("/v1", StringComparison.OrdinalIgnoreCase))
+                host = host.Substring(0, host.Length - 3).TrimEnd('/');
+
+            return host;
+        }
+
+        private OpenAIClient CreateOpenAIClient(ApiProfile profile)
+        {
+            string host = NormalizeHost(profile.ApiHost);
+
+            return new OpenAIClient(
+                new OpenAIAuthentication(profile.ApiKey),
+                new OpenAIClientSettings(host));
+        }
+
+        public async Task<IReadOnlyList<string>> ListModelsAsync(ApiProfile profile, CancellationToken token)
+        {
+            OpenAIClient tempClient = CreateOpenAIClient(profile);
+            var models = await tempClient.ModelsEndpoint.GetModelsAsync(token);
+
+            return models
+                .Select(m => m.Id)
+                .ToList();
+        }
+
+        public async Task<(bool success, string message)> ValidateProfileAsync(ApiProfile profile, CancellationToken token)
+        {
+            try
+            {
+                var models = await ListModelsAsync(profile, token);
+                if (models.Count > 0)
+                    return (true, "配置可用，已获取模型列表");
+
+                return (true, "配置可用，但未能获取模型列表");
+            }
+            catch (Exception ex)
+            {
+                return (false, ex.Message);
+            }
         }
 
         CancellationTokenSource? cancellation;
@@ -120,9 +165,8 @@ namespace OpenGptChat.Services
                 foreach (var sysmsg in session.SystemMessages)
                     messages.Add(new Message(Role.System, sysmsg));
 
-            if (session?.EnableChatContext ?? ConfigurationService.Configuration.EnableChatContext)
-                foreach (var chatmsg in ChatStorageService.GetAllMessages(sessionId))
-                    messages.Add(new Message(Enum.Parse<Role>(chatmsg.Role, true), chatmsg.Content));
+            foreach (var chatmsg in ChatStorageService.GetAllMessages(sessionId))
+                messages.Add(new Message(Enum.Parse<Role>(chatmsg.Role, true), chatmsg.Content));
 
             messages.Add(new Message(Role.User, message));
 

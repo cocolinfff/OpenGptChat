@@ -19,34 +19,6 @@
         <Grid>
             <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <StackPanel Margin="10">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition />
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock VerticalAlignment="Center">
-                            <Run Text="{DynamicResource StrEnableChatContext}"/>
-                            <Run Text=":"/>
-                        </TextBlock>
-
-                        <ComboBox Name="enableChatContextComboBox"
-                                  Grid.Column="1" VerticalAlignment="Center"
-                                  SelectionChanged="ComboBox_SelectionChanged">
-                            <ComboBoxItem Content="{DynamicResource StrAuto}" Tag="{x:Null}"/>
-                            
-                            <ComboBoxItem Content="{DynamicResource StrYes}" >
-                                <ComboBoxItem.Tag>
-                                    <s:Boolean>True</s:Boolean>
-                                </ComboBoxItem.Tag>
-                            </ComboBoxItem>
-
-                            <ComboBoxItem Content="{DynamicResource StrNo}">
-                                <ComboBoxItem.Tag>
-                                    <s:Boolean>False</s:Boolean>
-                                </ComboBoxItem.Tag>
-                            </ComboBoxItem>
-                        </ComboBox>
-                    </Grid>
                     <StackPanel Margin="0 5">
                         <Grid>
                             <TextBlock Margin="0 0 0 5">

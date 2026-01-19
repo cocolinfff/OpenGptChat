@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -24,7 +25,8 @@ namespace OpenGptChat.Views.Pages
             LanguageService languageService,
             ColorModeService colorModeService,
             ConfigurationService configurationService,
-            SmoothScrollingService smoothScrollingService)
+            SmoothScrollingService smoothScrollingService,
+            ChatService chatService)
         {
             AppWindow = appWindow;
             ViewModel = viewModel;
@@ -33,6 +35,7 @@ namespace OpenGptChat.Views.Pages
             LanguageService = languageService;
             ColorModeService = colorModeService;
             ConfigurationService = configurationService;
+            ChatService = chatService;
             DataContext = this;
 
             LoadSystemMessagesCore();
@@ -52,12 +55,45 @@ namespace OpenGptChat.Views.Pages
         public LanguageService LanguageService { get; }
         public ColorModeService ColorModeService { get; }
         public ConfigurationService ConfigurationService { get; }
+        public ChatService ChatService { get; }
+
+        private ApiProfile? subscribedProfile;
+        private CancellationTokenSource? modelsCts;
+        private CancellationTokenSource? checkConfigCts;
+        private CancellationTokenSource? autoFetchCts;
 
         private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == nameof(ViewModel.SelectedProfile) && ViewModel.SelectedProfile != null)
+            if (e.PropertyName == nameof(ViewModel.SelectedProfile))
             {
-                ConfigurationService.SetActiveProfile(ViewModel.SelectedProfile.Name);
+                SubscribeProfile(ViewModel.SelectedProfile);
+
+                if (ViewModel.SelectedProfile != null)
+                {
+                    ConfigurationService.SetActiveProfile(ViewModel.SelectedProfile.Name);
+                }
+            }
+        }
+
+        private void SubscribeProfile(ApiProfile? profile)
+        {
+            if (subscribedProfile != null)
+                subscribedProfile.PropertyChanged -= SelectedProfile_PropertyChanged;
+
+            subscribedProfile = profile;
+
+            if (subscribedProfile != null)
+            {
+                subscribedProfile.PropertyChanged += SelectedProfile_PropertyChanged;
+                _ = ScheduleFetchModelsAsync(subscribedProfile);
+            }
+        }
+
+        private async void SelectedProfile_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(ApiProfile.ApiHost) && sender is ApiProfile profile)
+            {
+                await ScheduleFetchModelsAsync(profile);
             }
         }
 
@@ -125,6 +161,75 @@ namespace OpenGptChat.Views.Pages
             }
         }
 
+        private async Task ScheduleFetchModelsAsync(ApiProfile profile)
+        {
+            autoFetchCts?.Cancel();
+            autoFetchCts = new CancellationTokenSource();
+
+            try
+            {
+                await Task.Delay(500, autoFetchCts.Token);
+                await FetchModelsAsync(profile, false, autoFetchCts.Token);
+            }
+            catch (TaskCanceledException)
+            {
+                // Ignore
+            }
+            finally
+            {
+                autoFetchCts = null;
+            }
+        }
+
+        private async Task FetchModelsAsync(ApiProfile profile, bool notify, CancellationToken token)
+        {
+            modelsCts?.Cancel();
+            modelsCts = CancellationTokenSource.CreateLinkedTokenSource(token);
+
+            ViewModel.IsFetchingModels = true;
+            ViewModel.StatusMessage = "正在获取模型...";
+
+            if (string.IsNullOrWhiteSpace(profile.ApiHost))
+            {
+                ViewModel.StatusMessage = "请先填写 ApiHost";
+
+                if (notify)
+                    await NoteService.ShowAndWaitAsync(ViewModel.StatusMessage, 1500);
+
+                ViewModel.IsFetchingModels = false;
+                return;
+            }
+
+            try
+            {
+                var models = await ChatService.ListModelsAsync(profile, modelsCts.Token);
+
+                ViewModel.AvailableModels.Clear();
+                foreach (var model in models)
+                    ViewModel.AvailableModels.Add(model);
+
+                ViewModel.StatusMessage = models.Count > 0 ? $"获取到 {models.Count} 个模型" : "未获取到模型";
+
+                if (notify)
+                    await NoteService.ShowAndWaitAsync(ViewModel.StatusMessage, 1500);
+            }
+            catch (TaskCanceledException)
+            {
+                // Ignore
+            }
+            catch (System.Exception ex)
+            {
+                ViewModel.StatusMessage = $"获取模型失败: {ex.Message}";
+
+                if (notify)
+                    await NoteService.ShowAndWaitAsync(ViewModel.StatusMessage, 2000);
+            }
+            finally
+            {
+                ViewModel.IsFetchingModels = false;
+            }
+        }
+
         [RelayCommand]
         public void AddProfile()
         {
@@ -172,6 +277,49 @@ namespace OpenGptChat.Views.Pages
                 ConfigurationService.Configuration.ActiveApiProfile = ConfigurationService.Configuration.ApiProfiles.First().Name;
 
             ViewModel.SelectedProfile = ConfigurationService.Configuration.ApiProfiles.FirstOrDefault();
+        }
+
+        [RelayCommand]
+        public Task RefreshModels()
+        {
+            if (ViewModel.SelectedProfile == null)
+                return Task.CompletedTask;
+
+            return FetchModelsAsync(ViewModel.SelectedProfile, true, CancellationToken.None);
+        }
+
+        [RelayCommand]
+        public async Task CheckConfiguration()
+        {
+            if (ViewModel.SelectedProfile == null)
+                return;
+
+            checkConfigCts?.Cancel();
+            checkConfigCts = new CancellationTokenSource();
+
+            ViewModel.IsCheckingConfig = true;
+            ViewModel.StatusMessage = "正在检测配置...";
+
+            try
+            {
+                var result = await ChatService.ValidateProfileAsync(ViewModel.SelectedProfile, checkConfigCts.Token);
+
+                ViewModel.StatusMessage = result.message;
+                await NoteService.ShowAndWaitAsync(result.message, 2000);
+            }
+            catch (TaskCanceledException)
+            {
+                // Ignore
+            }
+            catch (System.Exception ex)
+            {
+                ViewModel.StatusMessage = $"检测失败: {ex.Message}";
+                await NoteService.ShowAndWaitAsync(ViewModel.StatusMessage, 2000);
+            }
+            finally
+            {
+                ViewModel.IsCheckingConfig = false;
+            }
         }
 
         [RelayCommand]

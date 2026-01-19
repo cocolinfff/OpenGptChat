@@ -77,14 +77,21 @@
                         <Run Text="{DynamicResource StrAPIHost}"/>
                         <Run Text=":"/>
                     </TextBlock>
-                    <TextBox Padding="5 3" Text="{Binding ViewModel.SelectedProfile.ApiHost}"/>
+                    <TextBox Padding="5 3" Text="{Binding ViewModel.SelectedProfile.ApiHost, UpdateSourceTrigger=PropertyChanged}"/>
+                </StackPanel>
+                <StackPanel Margin="0 5" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Content="检测配置" Padding="8 3" Command="{Binding CheckConfigurationCommand}"/>
+                    <Button Content="刷新模型" Padding="8 3" Margin="8 0 0 0" Command="{Binding RefreshModelsCommand}"/>
+                    <TextBlock Margin="10 0 0 0" VerticalAlignment="Center" Text="{Binding ViewModel.StatusMessage}"/>
                 </StackPanel>
                 <StackPanel Margin="0 5">
                     <TextBlock Margin="0 0 0 5">
                         <Run Text="{DynamicResource StrModel}"/>
                         <Run Text=":"/>
                     </TextBlock>
-                    <TextBox Padding="5 3" Text="{Binding ViewModel.SelectedProfile.Model}"/>
+                    <ComboBox Padding="5 3" IsEditable="True"
+                              Text="{Binding ViewModel.SelectedProfile.Model, UpdateSourceTrigger=PropertyChanged}"
+                              ItemsSource="{Binding ViewModel.AvailableModels}"/>
                 </StackPanel>
                 <StackPanel Margin="0 5">
                     <TextBlock Margin="0 0 0 5">
@@ -130,20 +137,6 @@
                 </StackPanel>
 
                 <StackPanel Margin="0 30 0 5">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-
-                        <TextBlock>
-                            <Run Text="{DynamicResource StrEnableChatContext}"/>
-                            <Run Text=":"/>
-                        </TextBlock>
-                        <CheckBox Grid.Column="1" VerticalAlignment="Center" IsChecked="{Binding ConfigurationService.Configuration.EnableChatContext}"/>
-                    </Grid>
-                </StackPanel>
-                <StackPanel Margin="0 5 0 5">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition/>

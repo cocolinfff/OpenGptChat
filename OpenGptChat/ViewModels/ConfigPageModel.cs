@@ -12,5 +12,17 @@ namespace OpenGptChat.ViewModels
 
         [ObservableProperty]
         private ApiProfile? _selectedProfile;
+
+        [ObservableProperty]
+        private ObservableCollection<string> _availableModels = new();
+
+        [ObservableProperty]
+        private bool _isCheckingConfig;
+
+        [ObservableProperty]
+        private bool _isFetchingModels;
+
+        [ObservableProperty]
+        private string _statusMessage = string.Empty;
     }
 }

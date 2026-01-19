@@ -33,24 +33,10 @@ namespace OpenGptChat.Views.Dialogs
                 App.GetService<NoteService>();
 
             InitializeComponent();
-
-            if (!session.EnableChatContext.HasValue)
-                enableChatContextComboBox.SelectedIndex = 0;
-            else if (session.EnableChatContext.Value)
-                enableChatContextComboBox.SelectedIndex = 1;
-            else
-                enableChatContextComboBox.SelectedIndex = 2;
         }
 
         public ChatSessionModel Session { get; }
         public NoteService NoteService { get; }
-
-
-        public ObservableCollection<bool?> EnableChatContextValues =
-            new ObservableCollection<bool?>()
-            {
-                null, true, false,
-            };
 
 
         [RelayCommand]
@@ -74,17 +60,6 @@ namespace OpenGptChat.Views.Dialogs
             DialogResult = true;
 
             Close();
-        }
-
-        private void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (enableChatContextComboBox.SelectedItem is not ComboBoxItem item)
-                return;
-
-            if (item.Tag is bool value)
-                Session.EnableChatContext = value;
-            else
-                Session.EnableChatContext = null;
         }
     }
 }
