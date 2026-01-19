@@ -8,20 +8,19 @@ jobs:
     runs-on: windows-2022
     steps:
       - name: Setup .NET
-        uses: actions/setup-dotnet@v3
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 6.0.x
       
       - name: Checkout
-        uses: actions/checkout@v3.3.0
+        uses: actions/checkout@v4
 
       - name: Build
         run: dotnet publish -c Release -p:PublishProfile=win64 -p:PublishDir=..\Publish
 
       - name: Upload
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Release
           path: Publish/OpenGptChat.exe
-
           if-no-files-found: error
