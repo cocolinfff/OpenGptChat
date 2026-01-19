@@ -60,6 +60,7 @@
     
     <!--Menu-->
     <s:String x:Key="StrCopy">Copy</s:String>
+    <s:String x:Key="StrNormalizeLatex">Normalize LaTeX</s:String>
     <s:String x:Key="StrConfig">Config</s:String>
     <s:String x:Key="StrEdit">Edit</s:String>
     <s:String x:Key="StrDelete">Delete</s:String>

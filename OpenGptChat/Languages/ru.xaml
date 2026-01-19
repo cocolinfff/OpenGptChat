@@ -62,6 +62,7 @@
 
     <!-- Меню -->
     <s:String x:Key="StrCopy">Копировать</s:String>
+    <s:String x:Key="StrNormalizeLatex">Нормализовать LaTeX</s:String>
     <s:String x:Key="StrEdit">Редактировать</s:String>
     <s:String x:Key="StrConfig">Настройка</s:String>
     <s:String x:Key="StrDelete">Удалить</s:String>

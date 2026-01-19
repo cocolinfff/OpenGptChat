@@ -62,6 +62,7 @@
 
     <!--菜单-->
     <s:String x:Key="StrCopy">复制</s:String>
+    <s:String x:Key="StrNormalizeLatex">修复格式(beta)</s:String>
     <s:String x:Key="StrConfig">配置</s:String>
     <s:String x:Key="StrEdit">编辑</s:String>
     <s:String x:Key="StrDelete">删除</s:String>

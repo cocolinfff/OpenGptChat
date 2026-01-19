@@ -62,6 +62,7 @@
 
     <!--メニュー-->
     <s:String x:Key="StrCopy">コピー</s:String>
+    <s:String x:Key="StrNormalizeLatex">LaTeXを正規化</s:String>
     <s:String x:Key="StrEdit">編集</s:String>
     <s:String x:Key="StrConfig">設定</s:String>
     <s:String x:Key="StrDelete">削除</s:String>

@@ -91,6 +91,7 @@
                                 <controls:ChatBubble.ContextMenu>
                                     <ContextMenu>
                                         <MenuItem Header="{DynamicResource StrCopy}" Command="{Binding CopyCommand}"/>
+                                        <MenuItem Header="{DynamicResource StrNormalizeLatex}" Command="{Binding NormalizeLatexCommand}"/>
                                         <MenuItem Header="{DynamicResource StrEdit}" Command="{Binding StartEditCommand}"/>
                                         <MenuItem Header="{DynamicResource StrDelete}">
                                             <MenuItem Header="{DynamicResource StrThis}"

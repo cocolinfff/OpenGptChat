@@ -63,6 +63,7 @@
 
     <!--قائمة-->
     <s:String x:Key="StrCopy">نسخ</s:String>
+    <s:String x:Key="StrNormalizeLatex">تطبيع LaTeX</s:String>
     <s:String x:Key="StrConfig">تهيئة</s:String>
     <s:String x:Key="StrEdit">تحرير</s:String>
     <s:String x:Key="StrDelete">حذف</s:String>

@@ -1,5 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Linq;
+using System.Text.RegularExpressions;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -49,6 +51,12 @@ namespace OpenGptChat.ViewModels
 
         private static ChatStorageService ChatStorageService { get; } =
             App.GetService<ChatStorageService>();
+
+        private static readonly Regex EscapedBlockMathPattern = new(@"\\\[(?<expr>.+?)\\\]", RegexOptions.Compiled | RegexOptions.Singleline);
+        private static readonly Regex EscapedInlineMathPattern = new(@"\\\((?<expr>.+?)\\\)", RegexOptions.Compiled | RegexOptions.Singleline);
+        private static readonly Regex BlockLatexPattern = new(@"\[\$\$(?<expr>.+?)\$\$\]", RegexOptions.Compiled | RegexOptions.Singleline);
+        private static readonly Regex InlineLatexPattern = new(@"\[\$(?<expr>.+?)\$\]", RegexOptions.Compiled | RegexOptions.Singleline);
+        private static readonly Regex BracketMathPattern = new(@"(?<!\!)\[(?<expr>[^\[\]]+?)\](?!\()", RegexOptions.Compiled | RegexOptions.Singleline);
 
 
 
@@ -108,6 +116,59 @@ namespace OpenGptChat.ViewModels
         public void EndEdit()
         {
             IsEditing = false;
+        }
+
+        [RelayCommand]
+        public void NormalizeLatex()
+        {
+            if (string.IsNullOrWhiteSpace(Content))
+                return;
+
+            string normalized = NormalizeBracketedLatex(Content);
+
+            if (!string.Equals(Content, normalized, StringComparison.Ordinal))
+                Content = normalized;
+        }
+
+        private static string NormalizeBracketedLatex(string content)
+        {
+            string normalized = EscapedBlockMathPattern.Replace(content, m => "$" + m.Groups["expr"].Value.Trim() + "$");
+            normalized = EscapedInlineMathPattern.Replace(normalized, m => "$" + m.Groups["expr"].Value.Trim() + "$");
+
+            normalized = BlockLatexPattern.Replace(normalized, m => "$" + m.Groups["expr"].Value + "$");
+            normalized = InlineLatexPattern.Replace(normalized, m => "$" + m.Groups["expr"].Value + "$");
+
+            normalized = BracketMathPattern.Replace(normalized, m =>
+            {
+                string expr = m.Groups["expr"].Value.Trim();
+
+                if (expr.StartsWith("$$") && expr.EndsWith("$$"))
+                    return m.Value;
+
+                if (expr.StartsWith("$") && expr.EndsWith("$"))
+                    return m.Value;
+
+                if (!LooksLikeLatex(expr))
+                    return m.Value;
+
+                bool isMultiline = expr.Contains('\n');
+                return isMultiline ? "$$\n" + expr + "\n$$" : "$" + expr + "$";
+            });
+
+            return normalized;
+        }
+
+        private static bool LooksLikeLatex(string expr)
+        {
+            if (string.IsNullOrWhiteSpace(expr))
+                return false;
+
+            string[] markers =
+            {
+                "\\", "^", "_", "frac", "sqrt", "sum", "int", "lim", "pi", "theta", "delta", "Delta", "nabla", "alpha", "beta", "gamma", "omega"
+            };
+
+            return markers.Any(marker => expr.IndexOf(marker, StringComparison.OrdinalIgnoreCase) >= 0);
         }
 
         #endregion

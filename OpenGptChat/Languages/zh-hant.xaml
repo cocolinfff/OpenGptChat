@@ -63,6 +63,7 @@
 
     <!--菜單-->
     <s:String x:Key="StrCopy">複製</s:String>
+    <s:String x:Key="StrNormalizeLatex">修復公式格式</s:String>
     <s:String x:Key="StrConfig">配置</s:String>
     <s:String x:Key="StrEdit">編輯</s:String>
     <s:String x:Key="StrDelete">刪除</s:String>
