@@ -13,7 +13,16 @@ ChatGPT'ye dayalı basit bir sohbet uygulaması (https://platform.openai.com/doc
 
 </div>
 
+## Geliştirmeler
 
+Bu sürüm [SlimeNull/OpenGptChat](https://github.com/SlimeNull/OpenGptChat) temel alınarak aşağıdaki iyileştirmelerle geliştirilmiştir:
+
+- ✨ **R1 Akıl Yürütme Model Desteği**: DeepSeek-R1 ve QwQ gibi akıl yürütme modellerine destek eklendi, karmaşık akıl yürütme görevlerini daha iyi yönetir
+- 🔄 **Çoklu Yapılandırma Profilleri**: Birden fazla API yapılandırması arasında hızlı geçiş desteği, farklı modelleri ve servis sağlayıcıları yönetmeyi kolaylaştırır
+- 📝 **Geliştirilmiş Markdown Oluşturma**: Markdown içeriği oluşturma için deneysel iyileştirmeler, daha iyi okuma deneyimi
+- ⚠️ **Bilinen Sorunlar**: Matematiksel formül oluşturma hala sorunlu ve sürekli iyileştiriliyor
+
+Mükemmel çalışması için orijinal yazar [SlimeNull](https://github.com/SlimeNull) teşekkürler!
 
 ## Özellikler
 

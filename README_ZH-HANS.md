@@ -10,6 +10,17 @@
 
 </div>
 
+## 改进说明
+
+本版本基于 [SlimeNull/OpenGptChat](https://github.com/SlimeNull/OpenGptChat) 的原始项目进行了以下改进：
+
+- ✨ **支持 R1 类推理模型**：新增对 DeepSeek-R1、QwQ 等推理类模型的支持，能够更好地处理复杂推理任务
+- 🔄 **多配置清单切换**：支持在多个 API 配置之间快速切换，方便管理不同的模型和服务提供商
+- 📝 **改进的 Markdown 渲染**：试验性改进了 Markdown 内容的渲染效果，提升阅读体验
+- ⚠️ **已知问题**：数学公式渲染仍存在问题，正在持续改进中
+
+感谢原作者 [SlimeNull](https://github.com/SlimeNull) 的优秀工作！
+
 ## 功能
 
 1. 实时响应. 通过使用 `HTTP Stream`, 在服务器响应每一个字的时候, 程序都能将它展示到屏幕上, 而无需等待整个响应完成.

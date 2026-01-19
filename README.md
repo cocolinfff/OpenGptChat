@@ -10,6 +10,17 @@ A simple chat client based on [Open AI Chat completion API](https://platform.ope
 
 </div>
 
+## Improvements
+
+This version is based on [SlimeNull/OpenGptChat](https://github.com/SlimeNull/OpenGptChat) with the following improvements:
+
+- ✨ **R1 Reasoning Model Support**: Added support for reasoning models like DeepSeek-R1 and QwQ, better handling complex reasoning tasks
+- 🔄 **Multiple Configuration Profiles**: Support for quick switching between multiple API configurations, making it easy to manage different models and service providers
+- 📝 **Improved Markdown Rendering**: Experimental improvements to Markdown content rendering for better reading experience
+- ⚠️ **Known Issues**: Mathematical formula rendering still has issues and is being continuously improved
+
+Special thanks to the original author [SlimeNull](https://github.com/SlimeNull) for the excellent work!
+
 ## Features
 
 1. Real-time response. By using HTTP Stream, the program can display every character on the screen as soon as the server responds, without waiting for the entire response to complete.
